@@ -1,5 +1,74 @@
-# Function to verify prerequisites
+<#
+.SYNOPSIS
+    Creates a new .NET project with standardized configuration and best practices.
+
+.DESCRIPTION
+    This script automates the creation of various types of .NET projects with proper configuration,
+    package management, and security settings. It performs the following tasks:
+    - Verifies system prerequisites (.NET SDK, PowerShell version)
+    - Creates project structure using specified template
+    - Initializes user secrets for web projects
+    - Discovers and installs required NuGet packages
+    - Sets up configuration files and logging
+    - Handles error recovery and cleanup
+
+.PARAMETER TemplateType
+    Specifies the type of .NET project to create.
+    Valid values: "console", "classlib", "webapi", "maui-blazor", "wpf", "winforms", "blazor", "mvc"
+
+.PARAMETER OutputPath
+    Optional. Specifies the output directory for the project.
+    If not provided, uses the current directory name as the project name.
+
+.EXAMPLE
+    PS> .\New-DotNetProject.ps1 -TemplateType webapi
+    Creates a new WebAPI project in the current directory
+
+.EXAMPLE
+    PS> .\New-DotNetProject.ps1 -TemplateType maui-blazor -OutputPath "C:\Projects\MyApp"
+    Creates a new MAUI Blazor project in the specified directory
+
+.NOTES
+    Requirements:
+    - PowerShell 5.1 or later
+    - .NET 9.0 SDK or later
+    - Visual Studio 2022 (17.8 or later) recommended for certain project types
+
+.AUTHOR
+    Claude-3-5-sonnet-20241022
+    Corey L. Schneider, 2025
+
+.VERSION
+    1.0.0 - Initial release (2025-01-23)
+    - Added support for multiple .NET project templates
+    - Implemented package discovery and compatibility checking
+    - Added user secrets management for web projects
+#>
+
+<#
+.SYNOPSIS
+    Verifies system prerequisites for project creation.
+
+.DESCRIPTION
+    Checks if the system meets all required prerequisites for creating and running .NET projects.
+    This includes verifying PowerShell version, .NET SDK version, and template-specific requirements.
+
+.PARAMETER TemplateType
+    The type of .NET project template being used. This affects which specific prerequisites are checked.
+
+.EXAMPLE
+    Test-Prerequisites -TemplateType "webapi"
+    Verifies prerequisites for creating a WebAPI project.
+
+.NOTES
+    This function will terminate the script if any critical prerequisites are not met.
+    For MAUI and WebAPI projects, it will attempt to install required workloads if missing.
+
+.OUTPUTS
+    None. Throws terminating error if prerequisites are not met.
+#>
 function Test-Prerequisites {
+=======
     param(
         [string]$TemplateType
     )
@@ -74,8 +143,36 @@ function Test-Prerequisites {
     }
 }
 
-# Function to write log messages
+<#
+.SYNOPSIS
+    Writes a log message to both console and log file.
+
+.DESCRIPTION
+    Logs a message with timestamp to both the console and a specified log file.
+    Messages can be marked as errors which will be displayed in red.
+
+.PARAMETER Message
+    The message to be logged.
+
+.PARAMETER LogFile
+    The path to the log file. Defaults to "New-DotNetProject.log".
+
+.PARAMETER IsError
+    If specified, the message is treated as an error and displayed in red.
+
+.EXAMPLE
+    Write-Log -Message "Starting project creation" -LogFile "myproject.log"
+    Logs a normal message to both console and file.
+
+.EXAMPLE
+    Write-Log -Message "Failed to create directory" -IsError
+    Logs an error message in red to console and file.
+
+.NOTES
+    The function automatically prepends timestamps to all messages.
+#>
 function Write-Log {
+=======
     param(
         [string]$Message,
         [string]$LogFile = "New-DotNetProject.log",
@@ -95,8 +192,33 @@ function Write-Log {
     $logMessage | Out-File -FilePath $LogFile -Append
 }
 
-# Function to handle errors
+<#
+.SYNOPSIS
+    Writes a custom error message and optionally terminates the script.
+
+.DESCRIPTION
+    Handles error reporting with optional context information and cleanup operations.
+    Can perform fatal termination of the script with cleanup if specified.
+
+.PARAMETER ErrorMessage
+    The main error message to display.
+
+.PARAMETER Context
+    Optional context information to prepend to the error message.
+
+.PARAMETER Fatal
+    If specified, performs cleanup and terminates the script after logging the error.
+
+.EXAMPLE
+    Write-CustomError "Invalid configuration" -Context "Config Validation" -Fatal
+    Logs a fatal error with context and terminates the script.
+
+.NOTES
+    When Fatal is specified, this function will attempt to clean up any created project directories
+    before terminating the script.
+#>
 function Write-CustomError {
+=======
     param(
         [string]$ErrorMessage,
         [string]$Context = "",
@@ -115,7 +237,24 @@ function Write-CustomError {
     }
 }
 
-# Function to validate path
+<#
+.SYNOPSIS
+    Validates if a given path exists and is accessible.
+
+.DESCRIPTION
+    Checks if a specified path exists and can be accessed by the current user.
+    Handles null or whitespace input gracefully.
+
+.PARAMETER Path
+    The file system path to validate.
+
+.EXAMPLE
+    Test-ValidPath -Path "C:\Projects\MyApp"
+    Returns $true if the path exists and is accessible.
+
+.OUTPUTS
+    [bool] Returns true if the path exists and is accessible, false otherwise.
+#>
 function Test-ValidPath {
     param([string]$Path)
     
@@ -131,7 +270,25 @@ function Test-ValidPath {
     }
 }
 
-# Function to backup existing secrets
+<#
+.SYNOPSIS
+    Creates a backup of existing user secrets.
+
+.DESCRIPTION
+    Exports and saves the current user secrets to a timestamped backup file.
+    This provides a safety net before modifying secrets.
+
+.PARAMETER ProjectPath
+    The path to the .NET project root directory.
+
+.EXAMPLE
+    Backup-UserSecrets -ProjectPath "C:\Projects\MyApp"
+    Creates a backup file of current user secrets with timestamp.
+
+.NOTES
+    Backup files are created in the current directory with format:
+    user-secrets-backup-[timestamp].json
+#>
 function Backup-UserSecrets {
     param([string]$ProjectPath)
     
@@ -150,7 +307,28 @@ function Backup-UserSecrets {
     }
 }
 
-# Function to process JSON configuration and set user secrets
+<#
+.SYNOPSIS
+    Processes JSON configuration and sets user secrets.
+
+.DESCRIPTION
+    Recursively processes a JSON configuration object and sets corresponding user secrets.
+    Handles nested objects by creating hierarchical secret names.
+
+.PARAMETER JsonContent
+    The JSON content to process as a string.
+
+.PARAMETER ParentKey
+    Optional parent key for nested objects. Used internally for recursive processing.
+
+.EXAMPLE
+    Set-SecretsFromJson -JsonContent '{"Database":{"ConnectionString":"value"}}'
+    Sets user secrets from the provided JSON structure.
+
+.NOTES
+    - Skips certain values like templates (YOUR_*), booleans, and URLs
+    - Creates hierarchical secret names using colons (e.g., "Database:ConnectionString")
+#>
 function Set-SecretsFromJson {
     param(
         [string]$JsonContent,
@@ -190,7 +368,26 @@ function Set-SecretsFromJson {
     }
 }
 
-# Function to process INI configuration and set user secrets
+<#
+.SYNOPSIS
+    Processes INI configuration and sets user secrets.
+
+.DESCRIPTION
+    Parses INI-style configuration files and sets corresponding user secrets.
+    Supports sections and key-value pairs with proper hierarchical naming.
+
+.PARAMETER IniContent
+    The INI file content as a string.
+
+.EXAMPLE
+    Set-SecretsFromIni -IniContent "[Database]`nConnectionString=value"
+    Sets user secrets from the provided INI structure.
+
+.NOTES
+    - Ignores comment lines starting with #
+    - Creates hierarchical secret names using colons for sections (e.g., "Section:Key")
+    - Handles both sectioned and non-sectioned key-value pairs
+#>
 function Set-SecretsFromIni {
     param([string]$IniContent)
     
@@ -224,7 +421,26 @@ function Set-SecretsFromIni {
     }
 }
 
-# Function to process ENV configuration and set user secrets
+<#
+.SYNOPSIS
+    Processes environment variable configuration and sets user secrets.
+
+.DESCRIPTION
+    Parses environment variable style configuration files (.env) and sets user secrets.
+    Handles quoted values and ignores comments.
+
+.PARAMETER EnvContent
+    The environment file content as a string.
+
+.EXAMPLE
+    Set-SecretsFromEnv -EnvContent "DB_CONNECTION=value"
+    Sets user secrets from the provided environment variables.
+
+.NOTES
+    - Ignores comment lines starting with #
+    - Strips surrounding quotes from values
+    - Supports both single and double quoted values
+#>
 function Set-SecretsFromEnv {
     param([string]$EnvContent)
     
@@ -248,7 +464,27 @@ function Set-SecretsFromEnv {
     }
 }
 
-# Function to discover and process configuration files
+<#
+.SYNOPSIS
+    Discovers and processes configuration files to initialize user secrets.
+
+.DESCRIPTION
+    Searches for configuration files in the project directory and processes them to set up user secrets.
+    Handles JSON, INI, and ENV file formats. Creates default configuration if no files are found.
+
+.PARAMETER RootPath
+    The root path to search for configuration files.
+
+.EXAMPLE
+    Initialize-UserSecrets -RootPath "C:\Projects\MyApp"
+    Processes all configuration files in the specified directory.
+
+.NOTES
+    - Automatically backs up existing secrets before processing
+    - Skips files in bin and obj directories
+    - Supports appsettings.json, config.ini, .env, and .config files
+    - Creates default development configuration if no files are found
+#>
 function Initialize-UserSecrets {
     param([string]$RootPath)
     
@@ -320,7 +556,27 @@ function Initialize-UserSecrets {
     }
 }
 
-# Function to validate package compatibility
+<#
+.SYNOPSIS
+    Tests if a NuGet package is compatible with the project.
+
+.DESCRIPTION
+    Attempts to restore a specific package to verify compatibility.
+    Logs warnings for potentially incompatible packages.
+
+.PARAMETER Package
+    The name of the NuGet package to test.
+
+.PARAMETER ProjectPath
+    The path to the .NET project.
+
+.EXAMPLE
+    Test-PackageCompatibility -Package "Newtonsoft.Json" -ProjectPath "C:\Projects\MyApp"
+    Returns $true if the package is compatible.
+
+.OUTPUTS
+    [bool] Returns true if package is compatible, false otherwise.
+#>
 function Test-PackageCompatibility {
     param(
         [string]$Package,
@@ -341,7 +597,32 @@ function Test-PackageCompatibility {
     }
 }
 
-# Function to get all required packages (core + discovered)
+<#
+.SYNOPSIS
+    Discovers required NuGet packages for the project.
+
+.DESCRIPTION
+    Analyzes project files to determine required NuGet packages.
+    Includes core infrastructure packages and discovers additional
+    packages from markdown documentation.
+
+.PARAMETER RootPath
+    The root path to search for package references.
+
+.EXAMPLE
+    Get-RequiredPackages -RootPath "C:\Projects\MyApp"
+    Returns an array of required package names.
+
+.OUTPUTS
+    [string[]] Array of package names to be installed.
+
+.NOTES
+    Searches for packages in:
+    - XML package references
+    - Requirements.txt style references
+    - Code blocks in markdown files
+    - Includes core infrastructure packages by default
+#>
 function Get-RequiredPackages {
     param([string]$RootPath)
     
