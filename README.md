@@ -4,17 +4,23 @@
 
 This repository is intended as a premier boiler plate template for .NET projects, microservices, and applications. A more detailed explanation of the script can be found below but the idea is this;
 
->Intened for use with CLine, Roo Code, or any other VsCode 'LLm Assistant Coder' plugins.
+>Intened for use with CLine, Roo Code, or any other VsCode 'LLm Assistant Coder' plugins as a way to automate project generation once the planning phase of project has completed and documentation (markdown files used against LLM coder assistant style plugins) is generated.
 
-1) Generate markdown documentation, plans, archtiecture, and more.
+1) Generate markdown documentation, plans, archtiecture, and more and include different references for nuget packages using an LLM Assistant Coder Plugin like 'CLine' or 'Roo Code', or any other LLM model capable of generating markdown files.
 2) Generate or copy/paste a configuration file with existing keys and secrets for api's that are referenced in your project documentation.
 3) Run the 'New-DotnetProject.ps1' script
-4) Delete the script.
+4) Delete the script [Optional].
 5) Continue with your Project :smile:
+
+> ## I <b>KNOW</b>..., its a glorified 'dotnet new' wrapper 🙄; but its a good one 🙂
 
 ## Overview
 
-This PowerShell script automates the creation and setup of .NET projects with comprehensive environment validation, dependency management, and configuration handling. It streamlines the project initialization process by ensuring all prerequisites are met and setting up necessary configurations.
+This PowerShell script automates the creation and setup of .NET projects with comprehensive environment validation, dependency management, and configuration handling. It will check your markdown documentation for any referenced nuget packages, and install them for you during project creation. It also will initialize the 'dotnet user-secrets' to store any api_keys, or configurations for secrets (see supported config types) as well as streamlines the project initialization process by ensuring all prerequisites are met and setting up necessary configurations. The script will then initalize the git repository. It will also create a .gitignore file for you.
+
+Told you it was a good one 😁
+
+The idea was that one spends so much time on 'Architecture' and 'Planning' that the actual project creation should be a breeze. This script is intended to make that process easier.
 
 ## Features
 
