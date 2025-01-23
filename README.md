@@ -12,7 +12,7 @@ This repository is intended as a premier boiler plate template for .NET projects
 4) Delete the script [Optional].
 5) Continue with your Project :smile:
 
-> ## I <b>KNOW</b>..., its a glorified 'dotnet new' wrapper 🙄; but its a good one 🙂
+> ## I **KNOW**..., its a glorified 'dotnet new' wrapper 🙄; but its a good one 🙂
 
 ## Overview
 
